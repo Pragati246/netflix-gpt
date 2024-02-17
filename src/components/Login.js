@@ -4,10 +4,12 @@ import { checkValidaData } from "../utils/validate";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../utils/firebasej.js";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
     const [isSignInForm , setIsSignInForm ] = useState(true);
-    const [ errorMessage , setErrorMessage ] = useState(null)
+    const [errorMessage , setErrorMessage ] = useState(null)
+    const navigate = useNavigate();
 
     const email = useRef(null);
     const password = useRef(null);
@@ -15,10 +17,10 @@ const Login = () => {
     const handleButttonClick = () => {
         //validate form data
         // checkValidaData(email , password)
-        console.log(email.current.value);
-        console.log(password.current.value);
+        // console.log(email.current.value);
+        // console.log(password.current.value);
         const message = checkValidaData(email.current.value, password.current.value);
-        console.log(message);
+        // console.log(message);
         if(message) return;
 
          //sign in /sign up
@@ -29,28 +31,38 @@ const Login = () => {
                     // Signed up 
                     const user = userCredential.user;
                     console.log(user)
+                    navigate("/browser")
                     // ...
                 })
                 .catch((error) => {
                     const errorCode = error.code;
-                    const errorMessage = error.message;
-                    setErrorMessage(errorCode + "-" + errorMessage)
+                    const errorMessageDisplay = error.message;
+                    setErrorMessage(errorCode + "-" + errorMessageDisplay)
+                    console.log(errorMessage);
                     // ..
                 });
          }
          else {
             //sign in logic
-            signInWithEmailAndPassword(auth,email.current.value, password.current.value)
+            signInWithEmailAndPassword(auth , email.current.value , password.current.value)
                 .then((userCredential) => {
                     // Signed in 
+                    if(!userCredential){
+                        console.log("userName or password is inncorrect")
+                    }
                     const user = userCredential.user;
                     console.log(user)
+                    navigate("/browser")
                     // ...
                 })
                 .catch((error) => {
                     const errorCode = error.code;
-                    const errorMessage = error.message;
-                    setErrorMessage(errorCode + "-" + errorMessage)
+                    // const errorMessageDisplay = error.message;
+                    setErrorMessage(errorCode );
+                    if(errorCode === "auth/too-many-requests"){
+                        setErrorMessage("Too many Attempts!! Please wait.")
+                    }
+
                 });
 
          }
@@ -80,9 +92,19 @@ const Login = () => {
                 <input type="text" placeholder="Full Name" className="p-4 my-4 w-full bg-gray-700"/>)}
                 <input ref={email} type="text" placeholder="Email Address" className="p-4 my-4 w-full bg-gray-700"/>
                 <input ref={password} type="text" placeholder="Password" className="p-4 my-4 w-full bg-gray-700"/>
-                <button className="p-4 my-4 bg-red-700 w-full rounded-lg" onClick={handleButttonClick}>
+                {
+                    errorMessage 
+                    ? (<><button className="p-4 my-4 bg-red-700 w-full rounded-lg cursor-not-allowed"  onClick={handleButttonClick} >
                     {isSignInForm ? "Sign In" : "Sign Up"}
                 </button>
+                <p className=" font-bold text-red-700 text-2xl  ">{errorMessage}</p> </> )
+                    : <button className="p-4 my-4 bg-red-700 w-full rounded-lg"  onClick={handleButttonClick} >
+                    {isSignInForm ? "Sign In" : "Sign Up"}
+                </button>
+                }
+
+
+        
                 <h3>Forgot Password?</h3>
                 <p className="py-4" onClick={toggleSignInForm}>
                     {
